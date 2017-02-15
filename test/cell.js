@@ -1,8 +1,8 @@
 /*
   backgrid
-  http://github.com/wyuenho/backgrid
+  http://github.com/cloudflare/backgrid
 
-  Copyright (c) 2013 Jimmy Yuen Ho Wong and contributors
+  Copyright (c) 2013-present Cloudflare, Inc. and contributors
   Licensed under the MIT license.
 */
 
@@ -83,15 +83,18 @@ describe("An InputCellEditor", function () {
       backgridErrorTriggerArgs = [].slice.call(arguments);
     });
 
-    this.addMatchers({
-      toBeAnInstanceOf: function (expected) {
-        var actual = this.actual;
-        var notText = this.isNot ? " not" : "";
-        this.message = function () {
-          return "Expected " + actual + notText + " to be an instance of " + expected;
+    jasmine.addMatchers({
+      toBeAnInstanceOf: function (util) {
+        return {
+          compare: function (actual, expected) {
+            return {
+              pass: actual instanceof expected
+            };
+          },
+          negativeCompare: function (actual, expected) {
+            return !this.compare(actual, expected)
+          }
         };
-
-        return actual instanceof expected;
       }
     });
   });
@@ -132,16 +135,16 @@ describe("An InputCellEditor", function () {
 
   it("triggers 'backgrid:error' from the model when trying to save an invalid value", function () {
     editor.formatter = {
-      fromRaw: jasmine.createSpy("fromRaw").andCallFake(function (d) {
+      fromRaw: jasmine.createSpy("fromRaw").and.callFake(function (d) {
         return d;
       }),
-      toRaw: jasmine.createSpy("toRaw").andReturn(undefined)
+      toRaw: jasmine.createSpy("toRaw").and.returnValue(undefined)
     };
     editor.render();
-    $(editor.el).val("invalid value");
-    document.body.appendChild(editor.el);
-    emit(editor.el, SyntheticEvent("keydown", {keyCode: 13, bubbles: true, cancelable: true}));
-    expect(editor.formatter.toRaw.calls.length).toBe(1);
+    editor.$el.val("invalid value");
+    var enter = $.Event("keydown", { keyCode: 13 });
+    editor.$el.trigger(enter);
+    expect(editor.formatter.toRaw.calls.count()).toBe(1);
     expect(editor.formatter.toRaw).toHaveBeenCalledWith("invalid value", editor.model);
     expect(backgridErrorTriggerCount).toBe(1);
     expect(backgridErrorTriggerArgs[0]).toEqual(editor.model);
@@ -149,9 +152,8 @@ describe("An InputCellEditor", function () {
     expect(backgridErrorTriggerArgs[2]).toEqual("invalid value");
     document.body.removeChild(editor.el);
 
-    editor.formatter.toRaw.reset();
-    document.body.appendChild(editor.el);
-    emit(editor.el, SyntheticEvent("blur"));
+    editor.formatter.toRaw.calls.reset();
+    editor.$el.blur();
     expect(backgridErrorTriggerCount).toBe(2);
     expect(backgridErrorTriggerArgs[0]).toEqual(editor.model);
     expect(backgridErrorTriggerArgs[1]).toEqual(editor.column);
@@ -337,6 +339,44 @@ describe("A Cell", function () {
   it("renders a td with the model value formatted for display", function () {
     cell.render();
     expect($(cell.el).text()).toBe("title");
+  });
+
+  it("#472 updates editable, sortable, and renderable when rerendering", function () {
+
+    function starable (model) {
+      return model.get("title") == "Alice in Wonderland";
+    }
+
+    var TestCol = Backgrid.Column.extend({
+      mySortable: starable,
+      myRenderable: starable,
+      mySortable: starable
+    });
+
+    column = new TestCol({
+      name: "title",
+      cell: "string",
+      editable: "myEditable",
+      renderable: "myRenderable",
+      sortable: "mySortable"
+    });
+
+    cell = new Backgrid.Cell({
+      model: book,
+      column: column
+    });
+
+    cell.render();
+
+    book.set("title", "Alice in Wonderland");
+    expect(cell.$el.hasClass("editable")).toBe(true);
+    expect(cell.$el.hasClass("sortable")).toBe(true);
+    expect(cell.$el.hasClass("renderable")).toBe(true);
+
+    book.set("title", "Oliver Twist");
+    expect(cell.$el.hasClass("editable")).toBe(false);
+    expect(cell.$el.hasClass("sortable")).toBe(false);
+    expect(cell.$el.hasClass("renderable")).toBe(false);
   });
 
   it("goes into edit mode on click", function () {
@@ -1308,11 +1348,11 @@ describe("A SelectCellEditor", function () {
     editor.setOptionValues(optionValues);
     editor.render();
 
-    spyOn(editor.formatter, "toRaw").andCallThrough();
+    spyOn(editor.formatter, "toRaw").and.callThrough();
 
     emit($(editor.el).val(1)[0], SyntheticEvent("blur"));
     expect(editor.formatter.toRaw).toHaveBeenCalledWith("1", editor.model);
-    expect(editor.formatter.toRaw.calls.length).toBe(1);
+    expect(editor.formatter.toRaw.calls.count()).toBe(1);
     expect(editor.model.get(editor.column.get("name"))).toBe("1");
 
     // multiple selection
@@ -1331,16 +1371,16 @@ describe("A SelectCellEditor", function () {
     editor.setOptionValues(optionValues);
     editor.render();
 
-    spyOn(editor.formatter, "toRaw").andCallThrough();
+    spyOn(editor.formatter, "toRaw").and.callThrough();
 
     emit($(editor.el).val([1, 2])[0], SyntheticEvent("blur"));
     expect(editor.formatter.toRaw).toHaveBeenCalledWith(["1", "2"], editor.model);
-    expect(editor.formatter.toRaw.calls.length).toBe(1);
+    expect(editor.formatter.toRaw.calls.count()).toBe(1);
     expect(editor.model.get(editor.column.get("name"))).toEqual(["1", "2"]);
 
     emit($(editor.el).val(null)[0], SyntheticEvent("blur"));
     expect(editor.formatter.toRaw).toHaveBeenCalledWith(null, editor.model);
-    expect(editor.formatter.toRaw.calls.length).toBe(2);
+    expect(editor.formatter.toRaw.calls.count()).toBe(2);
     expect(editor.model.get(editor.column.get("name"))).toBe(null);
   });
 

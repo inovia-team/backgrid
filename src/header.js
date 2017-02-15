@@ -1,8 +1,8 @@
 /*
   backgrid
-  http://github.com/wyuenho/backgrid
+  http://github.com/cloudflare/backgrid
 
-  Copyright (c) 2013 Jimmy Yuen Ho Wong and contributors
+  Copyright (c) 2013-present Cloudflare, Inc. and contributors
   Licensed under the MIT license.
 */
 
@@ -21,7 +21,7 @@ var HeaderCell = Backgrid.HeaderCell = Backgrid.View.extend({
 
   /** @property */
   events: {
-    "click a": "onClick"
+    "click button": "onClick"
   },
 
   /**
@@ -60,12 +60,12 @@ var HeaderCell = Backgrid.HeaderCell = Backgrid.View.extend({
     if (Backgrid.callByNeed(column.sortable(), column, collection)) classes.add("sortable");
     if (Backgrid.callByNeed(column.renderable(), column, collection)) classes.add("renderable");
 
-    this.listenTo(collection.fullCollection || collection, "sort", this.removeCellDirection);
+    this.listenTo(collection.fullCollection || collection, "backgrid:sorted", this.removeCellDirection);
   },
 
   /**
-     Event handler for the collection's `sort` event. Removes all the CSS
-     direction classes.
+     Event handler for the collection's `backgrid:sorted` event. Removes
+     all the CSS direction classes.
    */
   removeCellDirection: function () {
     var classes = this.el.classList;
@@ -129,13 +129,11 @@ var HeaderCell = Backgrid.HeaderCell = Backgrid.View.extend({
 
     var column = this.column;
     var sortable = Backgrid.callByNeed(column.sortable(), column, this.collection);
-
-    if (sortable) {
-      label = document.createElement("a");
-      label.appendChild(document.createTextNode(this.column.get("label")));
-      var caret = document.createElement("b");
-      caret.className = "sort-caret";
-      label.appendChild(caret);
+    var label;
+    if(sortable){
+      label = $("<button>").text(column.get("label")).append("<span class='sort-caret' aria-hidden='true'></span>");
+    } else {
+      label = document.createTextNode(column.get("label"));
     }
     else label = document.createTextNode(column.get("label"));
     this.el.appendChild(label);
@@ -159,8 +157,6 @@ var HeaderCell = Backgrid.HeaderCell = Backgrid.View.extend({
    @extends Backgrid.Row
  */
 var HeaderRow = Backgrid.HeaderRow = Backgrid.Row.extend({
-
-  requiredOptions: ["columns", "collection"],
 
   /**
      Initializer.

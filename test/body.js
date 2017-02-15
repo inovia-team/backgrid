@@ -1,8 +1,8 @@
 /*
   backgrid
-  http://github.com/wyuenho/backgrid
+  http://github.com/cloudflare/backgrid
 
-  Copyright (c) 2013 Jimmy Yuen Ho Wong and contributors
+  Copyright (c) 2013-present Cloudflare, Inc. and contributors
   Licensed under the MIT license.
 */
 describe("A Body", function () {
@@ -29,9 +29,9 @@ describe("A Body", function () {
     var $trs = $(body.el).children();
     expect($trs.length).toBe(3);
     expect($(body.el).html().toLowerCase().replace(/\s*</g, '<'))
-        .toBe('<tr><td class="integer-cell editable sortable renderable">2</td></tr>' +
-              '<tr><td class="integer-cell editable sortable renderable">1</td></tr>' +
-              '<tr><td class="integer-cell editable sortable renderable">3</td></tr>');
+        .toBe('<tr><td class="integer-cell editable sortable renderable id">2</td></tr>' +
+              '<tr><td class="integer-cell editable sortable renderable id">1</td></tr>' +
+              '<tr><td class="integer-cell editable sortable renderable id">3</td></tr>');
   });
 
   it("will render a new row if a new model is added to its collection", function () {
@@ -41,7 +41,7 @@ describe("A Body", function () {
     var $trs = $(body.el).children();
     expect($trs.length).toBe(4);
     expect($("<div>").append($trs.eq(3).clone()).html().toLowerCase().replace(/\s*</g, '<'))
-        .toBe('<tr><td class="integer-cell editable sortable renderable">4</td></tr>');
+        .toBe('<tr><td class="integer-cell editable sortable renderable id">4</td></tr>');
 
     body.collection.add({
       id: 5
@@ -49,7 +49,7 @@ describe("A Body", function () {
     $trs = $(body.el).children();
     expect($trs.length).toBe(5);
     expect($("<div>").append($trs.eq(1).clone()).html().toLowerCase().replace(/\s*</g, '<'))
-        .toBe('<tr><td class="integer-cell editable sortable renderable">5</td></tr>');
+        .toBe('<tr><td class="integer-cell editable sortable renderable id">5</td></tr>');
   });
 
   it("will render a new row by calling insertRow directly with a new model", function () {
@@ -71,7 +71,7 @@ describe("A Body", function () {
     var $trs = $(body.el).children();
     expect($trs.length).toBe(1);
     expect($("<div>").append($trs.eq(0).clone()).html().toLowerCase().replace(/\s*</g, '<'))
-        .toBe('<tr><td class="integer-cell editable sortable renderable">4</td></tr>');
+        .toBe('<tr><td class="integer-cell editable sortable renderable id">4</td></tr>');
 
     body.insertRow({
       id: 5
@@ -79,7 +79,7 @@ describe("A Body", function () {
     $trs = $(body.el).children();
     expect($trs.length).toBe(2);
     expect($("<div>").append($trs.eq(0).clone()).html().toLowerCase().replace(/\s*</g, '<'))
-        .toBe('<tr><td class="integer-cell editable sortable renderable">5</td></tr>');
+        .toBe('<tr><td class="integer-cell editable sortable renderable id">5</td></tr>');
   });
 
   it("will remove a row from the DOM if a model is removed from its collection", function () {
@@ -88,8 +88,8 @@ describe("A Body", function () {
     var $trs = $(body.el).children();
     expect($trs.length).toBe(2);
     expect($(body.el).html().toLowerCase().replace(/\s+</g, '<'))
-        .toBe('<tr><td class="integer-cell editable sortable renderable">2</td></tr>' +
-              '<tr><td class="integer-cell editable sortable renderable">3</td></tr>');
+        .toBe('<tr><td class="integer-cell editable sortable renderable id">2</td></tr>' +
+              '<tr><td class="integer-cell editable sortable renderable id">3</td></tr>');
   });
 
   it("will remove a row from the DOM is removeRow is called directly with a model", function () {
@@ -98,8 +98,8 @@ describe("A Body", function () {
     var $trs = $(body.el).children();
     expect($trs.length).toBe(2);
     expect($(body.el).html().toLowerCase().replace(/\s+</g, '<'))
-        .toBe('<tr><td class="integer-cell editable sortable renderable">2</td></tr>' +
-              '<tr><td class="integer-cell editable sortable renderable">3</td></tr>');
+        .toBe('<tr><td class="integer-cell editable sortable renderable id">2</td></tr>' +
+              '<tr><td class="integer-cell editable sortable renderable id">3</td></tr>');
   });
 
   it("will refresh if its collection is reset", function () {
@@ -116,14 +116,14 @@ describe("A Body", function () {
     var $trs = $(body.el).children();
     expect($trs.length).toBe(1);
     expect($(body.el).html().toLowerCase().replace(/\s+</g, '<'))
-        .toBe('<tr><td class="integer-cell editable sortable renderable">6</td></tr>');
+        .toBe('<tr><td class="integer-cell editable sortable renderable id">6</td></tr>');
   });
 
   it("will render rows using the Row class supplied in the constructor options", function () {
 
     var CustomRow = Backgrid.Row.extend({});
 
-    spyOn(CustomRow.prototype, "render").andCallThrough();
+    spyOn(CustomRow.prototype, "render").and.callThrough();
 
     body = new Backgrid.Body({
       columns: [{
@@ -224,6 +224,23 @@ describe("A Body", function () {
     expect($(body.el).find("tr.empty > td").attr("colspan")).toBe("1");
   });
 
+  it("will update the colspan of the empty row as columns are changed", function () {
+    col.reset();
+    body = new Backgrid.Body({
+      emptyText: " ",
+      columns: [{
+        name: "id",
+        cell: "integer"
+      }],
+      collection: col
+    });
+    body.render();
+
+    expect(body.$el.find("tr.empty > td").attr("colspan")).toBe("1");
+    body.columns.push({name: "age", cell: "integer"});
+    expect(body.$el.find("tr.empty > td").attr("colspan")).toBe("2");
+  });
+
   it("will clear the empty row if a new model is added to an empty collection", function () {
     col.reset();
     body = new Backgrid.Body({
@@ -245,6 +262,36 @@ describe("A Body", function () {
 
     body.insertRow({id: 5});
     expect($(body.el).find("tr.empty").length).toBe(0);
+  });
+
+  it("will show the empty row if all rows are removed from the collection", function () {
+    col.reset({id: 4});
+    body = new Backgrid.Body({
+      emptyText: " ",
+      columns: [{
+        name: "id",
+        cell: "integer"
+      }],
+      collection: col
+    });
+    body.render();
+    expect(body.$el.find("tr.empty").length).toBe(0);
+
+    col.remove(col.at(0));
+    expect(body.$el.find("tr.empty").length).toBe(1);
+
+    body.insertRow({id: 5});
+    expect(body.$el.find("tr.empty").length).toBe(0);
+
+    body.removeRow(col.at(0));
+    expect(body.$el.find("tr.empty").length).toBe(1);
+  });
+
+  it("won't call render from updateEmptyRow if there is no emptyView", function () {
+    var pushColumn = function () {
+      body.columns.push({name: "age", cell: "integer"});
+    };
+    expect(pushColumn).not.toThrow();
   });
 
   it("#sort will throw a RangeError is direction is not ascending, descending or null", function () {
@@ -488,4 +535,44 @@ describe("A Body", function () {
     expect($(body.rows[1].cells[0].el).hasClass("editor")).toBe(false);
   });
 
+  it("will not throw an exception when backgrid:edited is fired on a shared model", function () {
+    var people = new Backbone.Collection([
+      {name: "alice", age: 28, married: false},
+      {name: "bob", age: 30, married: true}
+    ]);
+    var columns = new Backgrid.Columns([{
+      name: "name",
+      cell: "string"
+    }, {
+      name: "age",
+      cell: "integer",
+      editable: false
+    }, {
+      name: "sex",
+      cell: "boolean",
+      renderable: false
+    }]);
+    var body = new Backgrid.Body({
+      collection: people,
+      columns: columns
+    });
+    body.render();
+
+    var columns2 = new Backgrid.Columns([{
+      name: "name",
+      cell: "string"
+    }]);
+    var body2 = new Backgrid.Body({
+      collection: people,
+      columns: columns2
+    });
+    body2.render();
+
+    body.rows[0].cells[0].enterEditMode();
+    var testTrigger = function() {
+      people.trigger("backgrid:edited", people.at(0), columns.at(0), new Backgrid.Command({keyCode: 9}));
+    };
+    expect(testTrigger).not.toThrow();
+  });
+  
 });

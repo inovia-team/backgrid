@@ -1,8 +1,8 @@
 /*
   backgrid
-  http://github.com/wyuenho/backgrid
+  http://github.com/cloudflare/backgrid
 
-  Copyright (c) 2013 Jimmy Yuen Ho Wong and contributors
+  Copyright (c) 2013-present Cloudflare, Inc. and contributors
   Licensed under the MIT license.
 */
 
@@ -39,7 +39,9 @@ function lpad(str, length, padstr) {
   return padding + str;
 }
 
-var Backgrid = root.Backgrid = {
+var $ = Backbone.$;
+
+var Backgrid = {
 
   Extension: {},
 

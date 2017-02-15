@@ -1,8 +1,8 @@
 /*
   backgrid
-  http://github.com/wyuenho/backgrid
+  http://github.com/cloudflare/backgrid
 
-  Copyright (c) 2013 Jimmy Yuen Ho Wong and contributors
+  Copyright (c) 2013-present Cloudflare, Inc. and contributors
   Licensed under the MIT license.
 */
 
@@ -105,7 +105,7 @@ _.extend(NumberFormatter.prototype, {
   fromRaw: function (number, model) {
     if (_.isNull(number) || _.isUndefined(number)) return '';
 
-    number = number.toFixed(~~this.decimals);
+    number = parseFloat(number).toFixed(~~this.decimals);
 
     var parts = number.split('.');
     var integerPart = parts[0];

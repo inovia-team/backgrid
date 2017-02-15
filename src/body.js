@@ -1,8 +1,8 @@
 /*
   backgrid
-  http://github.com/wyuenho/backgrid
+  http://github.com/cloudflare/backgrid
 
-  Copyright (c) 2013 Jimmy Yuen Ho Wong and contributors
+  Copyright (c) 2013-present Cloudflare, Inc. and contributors
   Licensed under the MIT license.
 */
 
@@ -39,7 +39,7 @@ var Body = Backgrid.Body = Backgrid.View.extend({
       this.columns = new Columns(this.columns);
     }
 
-    this.row = options.row || Row;
+    this.row = options.row || this.row || Row;
     this.rows = this.collection.map(function (model) {
       var row = new this.row({
         columns: this.columns,
@@ -59,14 +59,19 @@ var Body = Backgrid.Body = Backgrid.View.extend({
     this.listenTo(collection, "reset", this.refresh);
     this.listenTo(collection, "backgrid:sort", this.sort);
     this.listenTo(collection, "backgrid:edited", this.moveToNextCell);
+
+    this.listenTo(this.columns, "add remove", this.updateEmptyRow);
   },
 
   _unshiftEmptyRowMayBe: function () {
     if (this.rows.length === 0 && this.emptyText != null) {
-      this.rows.unshift(new EmptyRow({
+      this.emptyRow = new EmptyRow({
         emptyText: this.emptyText,
         columns: this.columns
-      }));
+      });
+
+      this.rows.unshift(this.emptyRow);
+      return true
     }
   },
 
@@ -150,7 +155,9 @@ var Body = Backgrid.Body = Backgrid.View.extend({
     // removeRow() is called directly
     if (!options) {
       this.collection.remove(model, (options = collection));
-      this._unshiftEmptyRowMayBe();
+      if (this._unshiftEmptyRowMayBe()) {
+        this.render();
+      }
       return;
     }
 
@@ -159,9 +166,22 @@ var Body = Backgrid.Body = Backgrid.View.extend({
     }
 
     this.rows.splice(options.index, 1);
-    this._unshiftEmptyRowMayBe();
+    if (this._unshiftEmptyRowMayBe()) {
+      this.render();
+    }
 
     return this;
+  },
+
+  /**
+     Rerender the EmptyRow which empties the DOM element, creates the td with the
+     updated colspan, and appends it back into the DOM
+  */
+
+  updateEmptyRow: function () {
+    if (this.emptyRow != null) {
+      this.emptyRow.render();
+    }
   },
 
   /**
@@ -250,7 +270,7 @@ var Body = Backgrid.Body = Backgrid.View.extend({
      Triggers a Backbone `backgrid:sorted` event from the collection when done
      with the column, direction and a reference to the collection.
 
-     @param {Backgrid.Column} column
+     @param {Backgrid.Column|string} column
      @param {null|"ascending"|"descending"} direction
 
      See [Backbone.Collection#comparator](http://backbonejs.org/#Collection-comparator)
@@ -292,18 +312,19 @@ var Body = Backgrid.Body = Backgrid.View.extend({
         }
         collection.fullCollection.sort();
         collection.trigger("backgrid:sorted", column, direction, collection);
+        column.set("direction", direction);
       }
       else collection.fetch({reset: true, success: function () {
         collection.trigger("backgrid:sorted", column, direction, collection);
+        column.set("direction", direction);
       }});
     }
     else {
       collection.comparator = comparator;
       collection.sort();
       collection.trigger("backgrid:sorted", column, direction, collection);
+      column.set("direction", direction);
     }
-
-    column.set("direction", direction);
 
     return this;
   },
@@ -342,6 +363,9 @@ var Body = Backgrid.Body = Backgrid.View.extend({
     var i = this.collection.indexOf(model);
     var j = this.columns.indexOf(column);
     var cell, renderable, editable, m, n;
+
+    // return if model being edited in a different grid
+    if (j === -1) return this;
 
     this.rows[i].cells[j].exitEditMode();
 

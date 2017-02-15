@@ -1,6 +1,6 @@
 # Backgrid.js
 
-[![Build Status](https://travis-ci.org/wyuenho/backgrid.png?branch=master)](https://travis-ci.org/wyuenho/backgrid)
+[![Build Status](https://travis-ci.org/cloudflare/backgrid.png?branch=master)](https://travis-ci.org/cloudflare/backgrid)
 
 Backgrid.js is a set of components for building semantic and easily stylable
 data grid widgets. It offers a simple, intuitive programming interface that
@@ -22,12 +22,12 @@ functionalities easy.
 - Highly modular and customizable. Components are just simple Backbone View classes, customization is easy if you already know Backbone.
 - Lightweight. Extra features are separated into extensions, which keeps the bloat away.
 - Good documentation.
-- Well tested. Comes with [100s of test cases](http://wyuenho.github.io/backgrid/test/).
+- Well tested. Comes with [100s of test cases](http://cloudflare.github.io/backgrid/test/).
 
 ## Supported browsers [[1]](#note-1):
 
 - Internet Explorer 8 [[2]](#note-2)
-- Internet Exploror 9+
+- Internet Explorer 9+
 - Chrome 4+
 - Safari 4+
 - Firefox 4+
@@ -61,7 +61,7 @@ var columns = [{
   // Defines a cell type, and ID is displayed as an integer without the ',' separating 1000s.
   cell: Backgrid.IntegerCell.extend({
     orderSeparator: ''
-  }1)
+  })
 }, {
   name: "name",
   label: "Name",
@@ -104,11 +104,6 @@ Take a look [here](http://backgridjs.com/index.html#basic-example).
 Are you kidding me? This is a README file. Go to the [documentation](http://backgridjs.com/
 "Backbone.js Documentation") to find out more :)
 
-## Commercial Support
-
-If there's a feature that you would like me to implement or a bug you'd like me
-to fix, you can contact me at this [email address](mailto:wyuenho@gmail.com).
-
 ## License
-Copyright (c) 2013 Jimmy Yuen Ho Wong  
+Copyright (c) 2013-present Cloudflare, Inc.
 Licensed under the [MIT license](LICENSE-MIT "MIT License").

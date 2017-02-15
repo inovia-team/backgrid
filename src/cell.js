@@ -1,8 +1,8 @@
 /*
   backgrid
-  http://github.com/wyuenho/backgrid
+  http://github.com/cloudflare/backgrid
 
-  Copyright (c) 2013 Jimmy Yuen Ho Wong and contributors
+  Copyright (c) 2013-present Cloudflare, Inc. and contributors
   Licensed under the MIT license.
 */
 
@@ -254,9 +254,16 @@ var Cell = Backgrid.Cell = Backgrid.View.extend({
                     }
                   });
 
-    if (Backgrid.callByNeed(column.editable(), column, model)) classes.add("editable");
-    if (Backgrid.callByNeed(column.sortable(), column, model)) classes.add("sortable");
-    if (Backgrid.callByNeed(column.renderable(), column, model)) classes.add("renderable");
+    this.updateStateClassesMaybe();
+  },
+
+  updateStateClassesMaybe: function () {
+    var model = this.model;
+    var column = this.column;
+    var $el = this.$el;
+    $el.toggleClass("editable", Backgrid.callByNeed(column.editable(), column, model));
+    $el.toggleClass("sortable", Backgrid.callByNeed(column.sortable(), column, model));
+    $el.toggleClass("renderable", Backgrid.callByNeed(column.renderable(), column, model));
   },
 
   /**
@@ -264,10 +271,13 @@ var Cell = Backgrid.Cell = Backgrid.View.extend({
      model's raw value for this cell's column.
   */
   render: function () {
-    this.empty();
+    var $el = this.$el;
+    $el.empty();
     var model = this.model;
-    this.el.appendChild(document.createTextNode(
-      this.formatter.fromRaw(model.get(this.column.get("name")), model)));
+    var columnName = this.column.get("name");
+    $el.text(this.formatter.fromRaw(model.get(columnName), model));
+    $el.addClass(columnName);
+    this.updateStateClassesMaybe();
     this.delegateEvents();
     return this;
   },
@@ -792,6 +802,9 @@ var SelectCellEditor = Backgrid.SelectCellEditor = CellEditor.extend({
     "blur": "close",
     "keydown": "close"
   },
+
+  /** @property {function(Object, ?Object=): string} template */
+  template: _.template('<option value="<%- value %>" <%= selected ? \'selected="selected"\' : "" %>><%- text %></option>', null, {variable: null}),
 
   setOptionValues: function (optionValues) {
     this.optionValues = optionValues;

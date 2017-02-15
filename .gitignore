@@ -1,8 +1,5 @@
-api
 lib/*.min.*
-test/coverage
 bower_components
-components
 .grunt
 node_modules
 .rbenv-gemsets
@@ -15,3 +12,4 @@ node_modules
 .localized
 Thumb.db
 *.ithmb
+.idea
